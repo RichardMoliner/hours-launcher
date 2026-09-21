@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { describeLoginError, describeApiError, fetchIssueSummary } from '../lib/jira-api.js';
+import { describeLoginError, describeApiError, validateLogin, fetchIssueSummary, postWorklog } from '../lib/jira-api.js';
 
 test('describeLoginError maps 401 to invalid credentials message', () => {
   assert.equal(describeLoginError(401), 'Usuário ou senha inválidos');
@@ -29,8 +29,6 @@ test('describeApiError maps 404 without issueKey', () => {
 test('describeApiError falls back to a generic message with status', () => {
   assert.equal(describeApiError(500), 'Não foi possível completar a operação (status 500).');
 });
-
-import { validateLogin } from '../lib/jira-api.js';
 
 function fakeFetch(response) {
   const calls = [];
@@ -118,8 +116,6 @@ test('fetchIssueSummary returns a not-found message on 404', async () => {
     message: 'Tarefa DESENV-9999 não encontrada. Confira a chave.',
   });
 });
-
-import { postWorklog } from '../lib/jira-api.js';
 
 test('postWorklog sends a POST with the payload and returns ok on 201', async () => {
   const fetchImpl = fakeFetch({ ok: true, status: 201 });
