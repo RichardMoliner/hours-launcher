@@ -1,0 +1,10 @@
+{
+  "name": "lanc-hora",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Extensão Chrome para lançar horas no Jira.",
+  "scripts": {
+    "test": "node --test"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Lançador de Horas no Jira",
+  "version": "1.0.0",
+  "description": "Lança horas trabalhadas em tarefas do Jira sem abrir o Jira no navegador.",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["https://desenv.betha.com.br/*"]
+}
