@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildBasicAuthHeader, isValidTimeSpent, buildStartedTimestamp } from '../lib/format.js';
+import { buildBasicAuthHeader, isValidTimeSpent, buildStartedTimestamp, buildWorklogPayload } from '../lib/format.js';
 
 test('buildBasicAuthHeader encodes user:pass as base64 with a Basic prefix', () => {
   const header = buildBasicAuthHeader('rjunior', 'segredo123');
@@ -45,4 +45,33 @@ test('buildStartedTimestamp treats zero offset as +0000', () => {
     buildStartedTimestamp('2026-01-10', '00:05', 0),
     '2026-01-10T00:05:00.000+0000'
   );
+});
+
+test('buildWorklogPayload includes a trimmed comment when present', () => {
+  const payload = buildWorklogPayload({
+    startedIso: '2026-09-21T09:00:00.000-0300',
+    timeSpent: '2h',
+    comment: '  revisão de PR  ',
+  });
+  assert.deepEqual(payload, {
+    started: '2026-09-21T09:00:00.000-0300',
+    timeSpent: '2h',
+    comment: 'revisão de PR',
+  });
+});
+
+test('buildWorklogPayload omits comment when empty, whitespace, or missing', () => {
+  const base = { startedIso: '2026-09-21T09:00:00.000-0300', timeSpent: '2h' };
+  assert.deepEqual(buildWorklogPayload(base), {
+    started: base.startedIso,
+    timeSpent: '2h',
+  });
+  assert.deepEqual(buildWorklogPayload({ ...base, comment: '' }), {
+    started: base.startedIso,
+    timeSpent: '2h',
+  });
+  assert.deepEqual(buildWorklogPayload({ ...base, comment: '   ' }), {
+    started: base.startedIso,
+    timeSpent: '2h',
+  });
 });
