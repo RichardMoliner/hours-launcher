@@ -1,0 +1,60 @@
+body {
+  width: 320px;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  margin: 0;
+  padding: 12px;
+}
+
+.hidden {
+  display: none;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+input,
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px;
+  margin-top: 2px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.checkbox input {
+  width: auto;
+}
+
+.hint {
+  color: #555;
+  font-size: 12px;
+  margin: 4px 0;
+}
+
+.error {
+  color: #b00020;
+}
+
+.success {
+  color: #0a7a2f;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+#history-list {
+  padding-left: 16px;
+  font-size: 12px;
+}

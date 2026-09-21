@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lançador de Horas no Jira</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <section id="login-screen">
+    <h1>Entrar no Jira</h1>
+    <form id="login-form">
+      <label>
+        URL base do Jira
+        <input type="text" id="base-url" value="https://desenv.betha.com.br" required />
+      </label>
+      <label>
+        Usuário
+        <input type="text" id="username" required />
+      </label>
+      <label>
+        Senha
+        <input type="password" id="password" required />
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" id="keep-connected" />
+        Manter conectado neste navegador
+      </label>
+      <p class="hint">
+        O token de acesso fica salvo neste navegador em formato codificado
+        (não criptografado). Use apenas em máquinas de confiança.
+      </p>
+      <button type="submit" id="login-submit">Entrar</button>
+      <p id="login-error" class="error hidden"></p>
+      <details id="login-error-details" class="hidden">
+        <summary>Detalhes técnicos</summary>
+        <pre id="login-error-technical"></pre>
+      </details>
+    </form>
+  </section>
+
+  <section id="main-screen" class="hidden">
+    <header>
+      <span id="greeting"></span>
+      <a href="#" id="logout-link">Sair</a>
+    </header>
+
+    <form id="worklog-form">
+      <label>
+        Tarefa (chave)
+        <input type="text" id="issue-key" placeholder="DESENV-1234" required />
+      </label>
+      <p id="issue-summary" class="hint"></p>
+
+      <label>
+        Tempo gasto
+        <input type="text" id="time-spent" placeholder="2h, 1h 30m, 45m" required />
+      </label>
+      <p class="hint">Exemplos: 2h, 1h 30m, 30m</p>
+
+      <label>
+        Data
+        <input type="date" id="start-date" required />
+      </label>
+      <label>
+        Hora de início
+        <input type="time" id="start-time" required />
+      </label>
+
+      <label>
+        Descrição (opcional)
+        <textarea id="comment"></textarea>
+      </label>
+
+      <button type="submit" id="submit-worklog">Lançar horas</button>
+      <p id="worklog-error" class="error hidden"></p>
+      <details id="worklog-error-details" class="hidden">
+        <summary>Detalhes técnicos</summary>
+        <pre id="worklog-error-technical"></pre>
+      </details>
+      <p id="worklog-success" class="success hidden"></p>
+    </form>
+
+    <section id="history">
+      <h2>Últimos lançamentos</h2>
+      <ul id="history-list"></ul>
+    </section>
+  </section>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
