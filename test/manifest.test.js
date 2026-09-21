@@ -12,4 +12,6 @@ test('manifest.json is a valid MV3 config for the extension', () => {
   assert.deepEqual(manifest.permissions, ['storage']);
   assert.deepEqual(manifest.host_permissions, ['https://desenv.betha.com.br/*']);
   assert.equal(manifest.background, undefined);
+  assert.equal(manifest.icons['128'], 'logo.jpg');
+  assert.equal(manifest.action.default_icon['128'], 'logo.jpg');
 });

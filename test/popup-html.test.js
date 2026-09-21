@@ -11,6 +11,9 @@ test('popup.html defines the required screens and form fields', () => {
     'issue-key', 'issue-summary', 'time-spent', 'start-date', 'start-time',
     'comment', 'submit-worklog', 'worklog-error', 'worklog-error-details',
     'worklog-error-technical', 'worklog-success', 'history-list',
+    'tab-worklog', 'tab-assigned', 'worklog-panel', 'assigned-panel',
+    'assigned-issues-loading', 'assigned-issues-error', 'assigned-issues-error-details',
+    'assigned-issues-error-technical', 'assigned-issues-empty', 'assigned-issues-list',
   ];
 
   for (const id of requiredIds) {
@@ -19,4 +22,5 @@ test('popup.html defines the required screens and form fields', () => {
 
   assert.ok(html.includes('popup.css'));
   assert.ok(html.includes('type="module"'));
+  assert.ok(html.includes('logo.jpg'));
 });

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { describeLoginError, describeApiError, validateLogin, fetchIssueSummary, postWorklog } from '../lib/jira-api.js';
+import { describeLoginError, describeApiError, validateLogin, fetchIssueSummary, postWorklog, fetchAssignedIssues } from '../lib/jira-api.js';
 
 test('describeLoginError maps 401 to invalid credentials message', () => {
   assert.equal(describeLoginError(401), 'Usuário ou senha inválidos');
@@ -136,6 +136,73 @@ test('postWorklog sends a POST with the payload and returns ok on 201', async ()
   assert.equal(call.options.headers.Authorization, 'Basic abc123');
   assert.equal(call.options.headers['Content-Type'], 'application/json');
   assert.equal(call.options.body, JSON.stringify(payload));
+});
+
+test("fetchAssignedIssues returns key/summary/status for the current user's open issues", async () => {
+  const fetchImpl = fakeFetch({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      issues: [
+        { key: 'DESENV-1', fields: { summary: 'Corrigir bug X', status: { name: 'Em andamento' } } },
+        { key: 'DESENV-2', fields: { summary: 'Revisar PR', status: { name: 'Aberto' } } },
+      ],
+    }),
+  });
+
+  const result = await fetchAssignedIssues({
+    baseUrl: 'https://desenv.betha.com.br',
+    authHeader: 'Basic abc123',
+    fetchImpl,
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    issues: [
+      { key: 'DESENV-1', summary: 'Corrigir bug X', status: 'Em andamento' },
+      { key: 'DESENV-2', summary: 'Revisar PR', status: 'Aberto' },
+    ],
+  });
+
+  const call = fetchImpl.calls[0];
+  const expectedJql = 'assignee = currentUser() AND resolution = Unresolved ORDER BY updated DESC';
+  assert.ok(call.url.startsWith('https://desenv.betha.com.br/rest/api/2/search?'));
+  assert.ok(call.url.includes(`jql=${encodeURIComponent(expectedJql)}`));
+  assert.ok(call.url.includes('fields=summary,status'));
+  assert.ok(call.url.includes('maxResults=50'));
+  assert.equal(call.options.headers.Authorization, 'Basic abc123');
+});
+
+test('fetchAssignedIssues returns an empty list when there are no matching issues', async () => {
+  const fetchImpl = fakeFetch({
+    ok: true,
+    status: 200,
+    json: async () => ({ issues: [] }),
+  });
+
+  const result = await fetchAssignedIssues({
+    baseUrl: 'https://desenv.betha.com.br',
+    authHeader: 'Basic abc123',
+    fetchImpl,
+  });
+
+  assert.deepEqual(result, { ok: true, issues: [] });
+});
+
+test('fetchAssignedIssues returns a session-expired message on 401', async () => {
+  const fetchImpl = fakeFetch({ ok: false, status: 401 });
+
+  const result = await fetchAssignedIssues({
+    baseUrl: 'https://desenv.betha.com.br',
+    authHeader: 'Basic wrong',
+    fetchImpl,
+  });
+
+  assert.deepEqual(result, {
+    ok: false,
+    status: 401,
+    message: 'Sessão expirada, faça login novamente',
+  });
 });
 
 test('postWorklog returns an invalid-time message on 400', async () => {

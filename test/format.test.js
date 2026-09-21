@@ -8,6 +8,7 @@ import {
   addToHistoryEntry,
   normalizeBaseUrl,
   currentLocalDateTime,
+  formatDateBR,
 } from '../lib/format.js';
 
 test('buildBasicAuthHeader encodes user:pass as base64 with a Basic prefix', () => {
@@ -135,4 +136,12 @@ test('currentLocalDateTime keeps the local date for a late-evening time (no UTC 
 test('currentLocalDateTime zero-pads single-digit month, day, hour, and minute', () => {
   const now = new Date(2026, 0, 5, 4, 5);
   assert.deepEqual(currentLocalDateTime(now), { date: '2026-01-05', time: '04:05' });
+});
+
+test('formatDateBR converts an ISO date to DD/MM/YYYY', () => {
+  assert.equal(formatDateBR('2026-09-21'), '21/09/2026');
+});
+
+test('formatDateBR zero-pads correctly for single-digit day and month', () => {
+  assert.equal(formatDateBR('2026-01-05'), '05/01/2026');
 });

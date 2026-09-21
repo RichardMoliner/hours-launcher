@@ -7,7 +7,10 @@
 </head>
 <body>
   <section id="login-screen">
-    <h1>Entrar no Jira</h1>
+    <div class="brand">
+      <img src="logo.jpg" alt="Betha" class="brand-logo" />
+      <h1>Entrar no Jira</h1>
+    </div>
     <form id="login-form">
       <label>
         URL base do Jira
@@ -40,49 +43,70 @@
 
   <section id="main-screen" class="hidden">
     <header>
-      <span id="greeting"></span>
+      <div class="brand">
+        <img src="logo.jpg" alt="Betha" class="brand-logo-small" />
+        <span id="greeting"></span>
+      </div>
       <a href="#" id="logout-link">Sair</a>
     </header>
 
-    <form id="worklog-form">
-      <label>
-        Tarefa (chave)
-        <input type="text" id="issue-key" placeholder="DESENV-1234" required />
-      </label>
-      <p id="issue-summary" class="hint"></p>
+    <nav class="tabs">
+      <button type="button" id="tab-worklog" class="tab-button active">Lançar horas</button>
+      <button type="button" id="tab-assigned" class="tab-button">Tarefas vinculadas</button>
+    </nav>
 
-      <label>
-        Tempo gasto
-        <input type="text" id="time-spent" placeholder="2h, 1h 30m, 45m" required />
-      </label>
-      <p class="hint">Exemplos: 2h, 1h 30m, 30m</p>
+    <section id="worklog-panel" class="tab-panel">
+      <form id="worklog-form">
+        <label>
+          Tarefa (chave)
+          <input type="text" id="issue-key" placeholder="DESENV-1234" required />
+        </label>
+        <p id="issue-summary" class="hint"></p>
 
-      <label>
-        Data
-        <input type="date" id="start-date" required />
-      </label>
-      <label>
-        Hora de início
-        <input type="time" id="start-time" required />
-      </label>
+        <label>
+          Tempo gasto
+          <input type="text" id="time-spent" placeholder="2h, 1h 30m, 45m" required />
+        </label>
+        <p class="hint">Exemplos: 2h, 1h 30m, 30m</p>
 
-      <label>
-        Descrição (opcional)
-        <textarea id="comment"></textarea>
-      </label>
+        <label>
+          Data
+          <input type="date" id="start-date" required />
+        </label>
+        <label>
+          Hora de início
+          <input type="time" id="start-time" required />
+        </label>
 
-      <button type="submit" id="submit-worklog">Lançar horas</button>
-      <p id="worklog-error" class="error hidden"></p>
-      <details id="worklog-error-details" class="hidden">
+        <label>
+          Descrição (opcional)
+          <textarea id="comment"></textarea>
+        </label>
+
+        <button type="submit" id="submit-worklog">Lançar horas</button>
+        <p id="worklog-error" class="error hidden"></p>
+        <details id="worklog-error-details" class="hidden">
+          <summary>Detalhes técnicos</summary>
+          <pre id="worklog-error-technical"></pre>
+        </details>
+        <p id="worklog-success" class="success hidden"></p>
+      </form>
+
+      <section id="history">
+        <h2>Últimos lançamentos</h2>
+        <ul id="history-list"></ul>
+      </section>
+    </section>
+
+    <section id="assigned-panel" class="tab-panel hidden">
+      <p id="assigned-issues-loading" class="hint hidden">Carregando tarefas...</p>
+      <p id="assigned-issues-error" class="error hidden"></p>
+      <details id="assigned-issues-error-details" class="hidden">
         <summary>Detalhes técnicos</summary>
-        <pre id="worklog-error-technical"></pre>
+        <pre id="assigned-issues-error-technical"></pre>
       </details>
-      <p id="worklog-success" class="success hidden"></p>
-    </form>
-
-    <section id="history">
-      <h2>Últimos lançamentos</h2>
-      <ul id="history-list"></ul>
+      <p id="assigned-issues-empty" class="hint hidden">Nenhuma tarefa não concluída atribuída a você.</p>
+      <ul id="assigned-issues-list"></ul>
     </section>
   </section>
 

@@ -5,8 +5,15 @@ import {
   buildWorklogPayload,
   normalizeBaseUrl,
   currentLocalDateTime,
+  formatDateBR,
 } from './lib/format.js';
-import { validateLogin, fetchIssueSummary, postWorklog, describeApiError } from './lib/jira-api.js';
+import {
+  validateLogin,
+  fetchIssueSummary,
+  postWorklog,
+  describeApiError,
+  fetchAssignedIssues,
+} from './lib/jira-api.js';
 import { createAuthStore, createHistoryStore } from './lib/storage.js';
 
 const authStore = createAuthStore(chrome.storage.session, chrome.storage.local);
@@ -40,6 +47,17 @@ const worklogErrorTechnical = document.getElementById('worklog-error-technical')
 const worklogSuccess = document.getElementById('worklog-success');
 const historyList = document.getElementById('history-list');
 
+const tabWorklogButton = document.getElementById('tab-worklog');
+const tabAssignedButton = document.getElementById('tab-assigned');
+const worklogPanel = document.getElementById('worklog-panel');
+const assignedPanel = document.getElementById('assigned-panel');
+const assignedIssuesLoading = document.getElementById('assigned-issues-loading');
+const assignedIssuesError = document.getElementById('assigned-issues-error');
+const assignedIssuesErrorDetails = document.getElementById('assigned-issues-error-details');
+const assignedIssuesErrorTechnical = document.getElementById('assigned-issues-error-technical');
+const assignedIssuesEmpty = document.getElementById('assigned-issues-empty');
+const assignedIssuesList = document.getElementById('assigned-issues-list');
+
 let currentAuth = null;
 
 function showLoginScreen() {
@@ -50,6 +68,20 @@ function showLoginScreen() {
 function showMainScreen() {
   loginScreen.classList.add('hidden');
   mainScreen.classList.remove('hidden');
+}
+
+function showWorklogTab() {
+  tabWorklogButton.classList.add('active');
+  tabAssignedButton.classList.remove('active');
+  worklogPanel.classList.remove('hidden');
+  assignedPanel.classList.add('hidden');
+}
+
+function showAssignedTab() {
+  tabAssignedButton.classList.add('active');
+  tabWorklogButton.classList.remove('active');
+  assignedPanel.classList.remove('hidden');
+  worklogPanel.classList.add('hidden');
 }
 
 function setDefaultDateTime() {
@@ -76,7 +108,7 @@ async function renderHistory() {
   historyList.innerHTML = '';
   for (const item of history) {
     const li = document.createElement('li');
-    li.textContent = `${item.issueKey} — ${item.timeSpent} — ${item.date}`;
+    li.textContent = `${item.issueKey} — ${item.timeSpent} — ${formatDateBR(item.date)}`;
     historyList.appendChild(li);
   }
 }
@@ -162,12 +194,18 @@ logoutLink.addEventListener('click', async (event) => {
   currentAuth = null;
   loginForm.reset();
   baseUrlInput.value = 'https://desenv.betha.com.br';
+  worklogForm.reset();
+  issueSummary.textContent = '';
+  worklogSuccess.classList.add('hidden');
+  clearError(worklogError, worklogErrorDetails);
+  assignedIssuesList.innerHTML = '';
+  assignedIssuesEmpty.classList.add('hidden');
+  clearError(assignedIssuesError, assignedIssuesErrorDetails);
+  showWorklogTab();
   showLoginScreen();
 });
 
-issueKeyInput.addEventListener('blur', async () => {
-  const issueKey = issueKeyInput.value.trim();
-  issueSummary.textContent = '';
+async function lookupIssueSummary(issueKey) {
   if (!issueKey || !currentAuth) return;
 
   try {
@@ -188,6 +226,75 @@ issueKeyInput.addEventListener('blur', async () => {
   } catch (error) {
     showNetworkError(worklogError, worklogErrorDetails, worklogErrorTechnical, error);
   }
+}
+
+function selectAssignedIssue(issueKey) {
+  showWorklogTab();
+  issueKeyInput.value = issueKey;
+  issueSummary.textContent = '';
+  lookupIssueSummary(issueKey);
+  timeSpentInput.focus();
+}
+
+async function loadAssignedIssues() {
+  assignedIssuesError.classList.add('hidden');
+  assignedIssuesErrorDetails.classList.add('hidden');
+  assignedIssuesEmpty.classList.add('hidden');
+  assignedIssuesList.innerHTML = '';
+  assignedIssuesLoading.classList.remove('hidden');
+
+  try {
+    const result = await fetchAssignedIssues({
+      baseUrl: currentAuth.baseUrl,
+      authHeader: currentAuth.basicToken,
+      fetchImpl: fetch,
+    });
+
+    if (!result.ok) {
+      if (result.status === 401) {
+        await handleSessionExpired();
+        return;
+      }
+      assignedIssuesError.textContent = result.message;
+      assignedIssuesError.classList.remove('hidden');
+      return;
+    }
+
+    if (result.issues.length === 0) {
+      assignedIssuesEmpty.classList.remove('hidden');
+      return;
+    }
+
+    for (const issue of result.issues) {
+      const li = document.createElement('li');
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'assigned-issue';
+      button.textContent = `${issue.key} — ${issue.summary}`;
+      button.addEventListener('click', () => selectAssignedIssue(issue.key));
+      li.appendChild(button);
+      assignedIssuesList.appendChild(li);
+    }
+  } catch (error) {
+    showNetworkError(assignedIssuesError, assignedIssuesErrorDetails, assignedIssuesErrorTechnical, error);
+  } finally {
+    assignedIssuesLoading.classList.add('hidden');
+  }
+}
+
+tabWorklogButton.addEventListener('click', () => {
+  showWorklogTab();
+});
+
+tabAssignedButton.addEventListener('click', () => {
+  showAssignedTab();
+  loadAssignedIssues();
+});
+
+issueKeyInput.addEventListener('blur', async () => {
+  const issueKey = issueKeyInput.value.trim();
+  issueSummary.textContent = '';
+  await lookupIssueSummary(issueKey);
 });
 
 worklogForm.addEventListener('submit', async (event) => {
