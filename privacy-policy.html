@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Política de Privacidade — Lançador de Horas no Jira</title>
+<style>
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: #1f2937;
+    background: #f8fafc;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 20px 64px;
+    line-height: 1.6;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  header img {
+    width: 40px;
+    height: 40px;
+    border-radius: 9px;
+  }
+  h1 {
+    font-size: 22px;
+    margin: 0;
+  }
+  .updated {
+    color: #6b7280;
+    font-size: 13px;
+    margin-bottom: 32px;
+  }
+  h2 {
+    font-size: 16px;
+    color: #155eef;
+    margin-top: 32px;
+    margin-bottom: 8px;
+  }
+  p, li {
+    font-size: 14px;
+  }
+  ul {
+    padding-left: 20px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+  }
+  th {
+    background: #eaf1ff;
+    color: #0b3fa8;
+  }
+  .note {
+    background: #fef3f2;
+    border: 1px solid #fda29b;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: #7a271a;
+  }
+  a {
+    color: #155eef;
+  }
+  footer {
+    margin-top: 40px;
+    color: #6b7280;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <img src="logo.jpg" alt="Betha" />
+    <h1>Política de Privacidade</h1>
+  </header>
+  <p class="updated">Extensão: Lançador de Horas no Jira · Última atualização: 21 de setembro de 2026</p>
+
+  <p>
+    Esta extensão para o Google Chrome ("a extensão") foi desenvolvida para uso interno da Betha,
+    permitindo que colaboradores lancem horas trabalhadas em tarefas do Jira sem precisar abrir o
+    Jira no navegador. Esta política descreve quais dados a extensão acessa, como são usados e
+    onde ficam armazenados.
+  </p>
+
+  <h2>Resumo</h2>
+  <ul>
+    <li>A extensão <strong>não envia dados para nenhum servidor de terceiros</strong> nem para qualquer
+      servidor operado pelos desenvolvedores da extensão.</li>
+    <li>Toda comunicação acontece <strong>diretamente entre o seu navegador e a instância do Jira</strong>
+      da Betha (<code>https://desenv.betha.com.br</code>).</li>
+    <li>Não há coleta de analytics, rastreamento de uso, nem compartilhamento de dados com terceiros.</li>
+    <li>Os dados ficam salvos apenas localmente, no seu navegador, e são removidos ao clicar em
+      "Sair" ou ao desinstalar a extensão.</li>
+  </ul>
+
+  <h2>Quais dados a extensão acessa</h2>
+  <table>
+    <tr><th>Dado</th><th>Origem</th><th>Onde fica armazenado</th></tr>
+    <tr>
+      <td>Usuário e senha do Jira</td>
+      <td>Digitados por você na tela de login</td>
+      <td>Não são salvos isoladamente. A senha é usada apenas em memória para montar o token de
+        autenticação e nunca é gravada em disco separadamente.</td>
+    </tr>
+    <tr>
+      <td>Token de autenticação (Basic Auth, usuário:senha codificado em base64)</td>
+      <td>Gerado a partir do usuário e senha informados</td>
+      <td><code>chrome.storage.session</code> (memória, some ao fechar o navegador) e, se a opção
+        "Manter conectado" estiver marcada, também em <code>chrome.storage.local</code>
+        (persiste entre reinícios do navegador).</td>
+    </tr>
+    <tr>
+      <td>Nome de exibição (displayName) e URL base do Jira</td>
+      <td>Resposta da própria API do Jira após o login</td>
+      <td>Mesmo local do token, para exibir a saudação e montar as chamadas seguintes.</td>
+    </tr>
+    <tr>
+      <td>Histórico dos últimos 5 lançamentos de horas (tarefa, tempo, data, descrição)</td>
+      <td>Gerado pelos seus próprios lançamentos feitos pela extensão</td>
+      <td><code>chrome.storage.local</code>, apenas para conferência visual — o Jira continua sendo
+        a fonte de verdade.</td>
+    </tr>
+    <tr>
+      <td>Chave, título e status de tarefas do Jira atribuídas a você</td>
+      <td>Resposta da API do Jira ao consultar suas tarefas</td>
+      <td>Exibidos temporariamente na tela da extensão; não são gravados em disco.</td>
+    </tr>
+  </table>
+
+  <h2>Como os dados são usados</h2>
+  <p>
+    Os dados acima são usados exclusivamente para autenticar você na sua própria instância do Jira
+    e para permitir a consulta e o lançamento de horas trabalhadas nas tarefas às quais você tem
+    acesso. Nenhum dado é usado para publicidade, perfis de comportamento, ou qualquer finalidade
+    além do funcionamento da própria extensão.
+  </p>
+
+  <h2>Compartilhamento de dados</h2>
+  <p>
+    A extensão não compartilha, vende, transfere ou envia nenhum dado para terceiros. As únicas
+    chamadas de rede feitas pela extensão são requisições diretas do seu navegador para a API REST
+    do Jira em <code>https://desenv.betha.com.br</code>, usando a permissão de host declarada no
+    manifesto da extensão (<code>host_permissions</code>), restrita a esse único domínio.
+  </p>
+
+  <h2>Permissões solicitadas</h2>
+  <ul>
+    <li><strong>storage</strong> — necessária para salvar localmente o token de sessão e o
+      histórico de lançamentos, para que você não precise fazer login toda vez que abrir a
+      extensão.</li>
+    <li><strong>host_permissions (desenv.betha.com.br)</strong> — necessária para que a extensão
+      possa fazer chamadas diretas à API do Jira dessa instância específica.</li>
+  </ul>
+
+  <h2>Retenção e exclusão dos dados</h2>
+  <p>
+    Você controla a retenção dos seus dados a qualquer momento:
+  </p>
+  <ul>
+    <li>Clicar em <strong>"Sair"</strong> apaga imediatamente o token de autenticação salvo,
+      tanto da sessão quanto do armazenamento persistente.</li>
+    <li>Desmarcar a opção "Manter conectado" faz com que o token seja removido automaticamente
+      ao fechar o navegador.</li>
+    <li><strong>Desinstalar a extensão</strong> remove todos os dados armazenados por ela
+      (Chrome apaga automaticamente o <code>chrome.storage</code> de extensões desinstaladas).</li>
+    <li>O histórico local é limitado aos 5 lançamentos mais recentes; entradas mais antigas são
+      descartadas automaticamente.</li>
+  </ul>
+
+  <p class="note">
+    <strong>Observação de segurança:</strong> o token de autenticação é salvo apenas codificado em
+    base64, não criptografado — qualquer pessoa com acesso ao seu perfil do Chrome conseguiria
+    decodificá-lo. Por isso, recomendamos usar a extensão apenas em máquinas de trabalho de
+    confiança, sob sua responsabilidade.
+  </p>
+
+  <h2>Alterações nesta política</h2>
+  <p>
+    Esta política pode ser atualizada caso a extensão passe a acessar outros dados ou serviços.
+    A data da última atualização está indicada no topo desta página.
+  </p>
+
+  <h2>Contato</h2>
+  <p>
+    Dúvidas sobre esta política ou sobre o funcionamento da extensão podem ser enviadas para
+    <a href="mailto:richard.junior@betha.com.br">richard.junior@betha.com.br</a>.
+  </p>
+
+  <footer>
+    Lançador de Horas no Jira — ferramenta interna da Betha.
+  </footer>
+</body>
+</html>
