@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { describeLoginError, describeApiError } from '../lib/jira-api.js';
+import { describeLoginError, describeApiError, fetchIssueSummary } from '../lib/jira-api.js';
 
 test('describeLoginError maps 401 to invalid credentials message', () => {
   assert.equal(describeLoginError(401), 'Usuário ou senha inválidos');
@@ -78,5 +78,43 @@ test('validateLogin returns a failure message on 401', async () => {
     ok: false,
     status: 401,
     message: 'Usuário ou senha inválidos',
+  });
+});
+
+test('fetchIssueSummary returns the summary on 200', async () => {
+  const fetchImpl = fakeFetch({
+    ok: true,
+    status: 200,
+    json: async () => ({ fields: { summary: 'Corrigir bug X' } }),
+  });
+
+  const result = await fetchIssueSummary({
+    baseUrl: 'https://desenv.betha.com.br',
+    issueKey: 'DESENV-1234',
+    authHeader: 'Basic abc123',
+    fetchImpl,
+  });
+
+  assert.deepEqual(result, { ok: true, summary: 'Corrigir bug X' });
+  assert.equal(
+    fetchImpl.calls[0].url,
+    'https://desenv.betha.com.br/rest/api/2/issue/DESENV-1234?fields=summary,status'
+  );
+});
+
+test('fetchIssueSummary returns a not-found message on 404', async () => {
+  const fetchImpl = fakeFetch({ ok: false, status: 404 });
+
+  const result = await fetchIssueSummary({
+    baseUrl: 'https://desenv.betha.com.br',
+    issueKey: 'DESENV-9999',
+    authHeader: 'Basic abc123',
+    fetchImpl,
+  });
+
+  assert.deepEqual(result, {
+    ok: false,
+    status: 404,
+    message: 'Tarefa DESENV-9999 não encontrada. Confira a chave.',
   });
 });
