@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildBasicAuthHeader, isValidTimeSpent, buildStartedTimestamp, buildWorklogPayload } from '../lib/format.js';
+import { buildBasicAuthHeader, isValidTimeSpent, buildStartedTimestamp, buildWorklogPayload, addToHistoryEntry } from '../lib/format.js';
 
 test('buildBasicAuthHeader encodes user:pass as base64 with a Basic prefix', () => {
   const header = buildBasicAuthHeader('rjunior', 'segredo123');
@@ -74,4 +74,29 @@ test('buildWorklogPayload omits comment when empty, whitespace, or missing', () 
     started: base.startedIso,
     timeSpent: '2h',
   });
+});
+
+test('addToHistoryEntry adds the new entry to the front', () => {
+  const result = addToHistoryEntry([], { issueKey: 'DESENV-1' });
+  assert.deepEqual(result, [{ issueKey: 'DESENV-1' }]);
+});
+
+test('addToHistoryEntry caps the list at maxItems, dropping the oldest', () => {
+  const existing = [
+    { issueKey: 'A' }, { issueKey: 'B' }, { issueKey: 'C' },
+    { issueKey: 'D' }, { issueKey: 'E' },
+  ];
+  const result = addToHistoryEntry(existing, { issueKey: 'NEW' }, 5);
+  assert.equal(result.length, 5);
+  assert.deepEqual(result[0], { issueKey: 'NEW' });
+  assert.deepEqual(result[4], { issueKey: 'D' });
+});
+
+test('addToHistoryEntry defaults maxItems to 5', () => {
+  const existing = [
+    { issueKey: 'A' }, { issueKey: 'B' }, { issueKey: 'C' },
+    { issueKey: 'D' }, { issueKey: 'E' },
+  ];
+  const result = addToHistoryEntry(existing, { issueKey: 'NEW' });
+  assert.equal(result.length, 5);
 });
