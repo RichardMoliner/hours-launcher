@@ -1,10 +1,24 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildBasicAuthHeader, isValidTimeSpent, buildStartedTimestamp, buildWorklogPayload, addToHistoryEntry } from '../lib/format.js';
+import {
+  buildBasicAuthHeader,
+  isValidTimeSpent,
+  buildStartedTimestamp,
+  buildWorklogPayload,
+  addToHistoryEntry,
+  normalizeBaseUrl,
+  currentLocalDateTime,
+} from '../lib/format.js';
 
 test('buildBasicAuthHeader encodes user:pass as base64 with a Basic prefix', () => {
   const header = buildBasicAuthHeader('rjunior', 'segredo123');
   const expectedToken = Buffer.from('rjunior:segredo123').toString('base64');
+  assert.equal(header, `Basic ${expectedToken}`);
+});
+
+test('buildBasicAuthHeader correctly encodes UTF-8 characters like accents', () => {
+  const header = buildBasicAuthHeader('rjunior', 'senhã123');
+  const expectedToken = Buffer.from('rjunior:senhã123', 'utf8').toString('base64');
   assert.equal(header, `Basic ${expectedToken}`);
 });
 
@@ -99,4 +113,26 @@ test('addToHistoryEntry defaults maxItems to 5', () => {
   ];
   const result = addToHistoryEntry(existing, { issueKey: 'NEW' });
   assert.equal(result.length, 5);
+});
+
+test('normalizeBaseUrl strips a trailing slash', () => {
+  assert.equal(normalizeBaseUrl('https://desenv.betha.com.br/'), 'https://desenv.betha.com.br');
+});
+
+test('normalizeBaseUrl trims surrounding whitespace', () => {
+  assert.equal(normalizeBaseUrl('  https://desenv.betha.com.br  '), 'https://desenv.betha.com.br');
+});
+
+test('normalizeBaseUrl leaves a clean URL unchanged', () => {
+  assert.equal(normalizeBaseUrl('https://desenv.betha.com.br'), 'https://desenv.betha.com.br');
+});
+
+test('currentLocalDateTime keeps the local date for a late-evening time (no UTC roll-over)', () => {
+  const now = new Date(2026, 8, 21, 23, 30);
+  assert.deepEqual(currentLocalDateTime(now), { date: '2026-09-21', time: '23:30' });
+});
+
+test('currentLocalDateTime zero-pads single-digit month, day, hour, and minute', () => {
+  const now = new Date(2026, 0, 5, 4, 5);
+  assert.deepEqual(currentLocalDateTime(now), { date: '2026-01-05', time: '04:05' });
 });

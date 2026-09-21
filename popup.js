@@ -3,8 +3,10 @@ import {
   isValidTimeSpent,
   buildStartedTimestamp,
   buildWorklogPayload,
+  normalizeBaseUrl,
+  currentLocalDateTime,
 } from './lib/format.js';
-import { validateLogin, fetchIssueSummary, postWorklog } from './lib/jira-api.js';
+import { validateLogin, fetchIssueSummary, postWorklog, describeApiError } from './lib/jira-api.js';
 import { createAuthStore, createHistoryStore } from './lib/storage.js';
 
 const authStore = createAuthStore(chrome.storage.session, chrome.storage.local);
@@ -20,10 +22,12 @@ const keepConnectedInput = document.getElementById('keep-connected');
 const loginError = document.getElementById('login-error');
 const loginErrorDetails = document.getElementById('login-error-details');
 const loginErrorTechnical = document.getElementById('login-error-technical');
+const loginSubmitButton = document.getElementById('login-submit');
 
 const greeting = document.getElementById('greeting');
 const logoutLink = document.getElementById('logout-link');
 const worklogForm = document.getElementById('worklog-form');
+const submitWorklogButton = document.getElementById('submit-worklog');
 const issueKeyInput = document.getElementById('issue-key');
 const issueSummary = document.getElementById('issue-summary');
 const timeSpentInput = document.getElementById('time-spent');
@@ -49,9 +53,9 @@ function showMainScreen() {
 }
 
 function setDefaultDateTime() {
-  const now = new Date();
-  startDateInput.value = now.toISOString().slice(0, 10);
-  startTimeInput.value = now.toTimeString().slice(0, 5);
+  const { date, time } = currentLocalDateTime(new Date());
+  startDateInput.value = date;
+  startTimeInput.value = time;
 }
 
 function showNetworkError(errorEl, detailsEl, technicalEl, error) {
@@ -100,8 +104,7 @@ async function tryRestoreSession() {
     });
 
     if (!result.ok) {
-      await authStore.clearAuth();
-      showLoginScreen();
+      await handleSessionExpired();
       return;
     }
 
@@ -120,13 +123,16 @@ loginForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   clearError(loginError, loginErrorDetails);
 
-  const baseUrl = baseUrlInput.value.trim().replace(/\/$/, '');
+  const baseUrl = normalizeBaseUrl(baseUrlInput.value);
   const username = usernameInput.value.trim();
   const password = passwordInput.value;
   const keepConnected = keepConnectedInput.checked;
-  const authHeader = buildBasicAuthHeader(username, password);
+
+  loginSubmitButton.disabled = true;
+  loginSubmitButton.textContent = 'Entrando...';
 
   try {
+    const authHeader = buildBasicAuthHeader(username, password);
     const result = await validateLogin({ baseUrl, authHeader, fetchImpl: fetch });
     if (!result.ok) {
       loginError.textContent = result.message;
@@ -144,6 +150,9 @@ loginForm.addEventListener('submit', async (event) => {
     showMainScreen();
   } catch (error) {
     showNetworkError(loginError, loginErrorDetails, loginErrorTechnical, error);
+  } finally {
+    loginSubmitButton.disabled = false;
+    loginSubmitButton.textContent = 'Entrar';
   }
 });
 
@@ -198,20 +207,22 @@ worklogForm.addEventListener('submit', async (event) => {
 
   if (!timeSpent || !isValidTimeSpent(timeSpent)) {
     timeSpentInput.focus();
-    worklogError.textContent =
-      'Não foi possível interpretar o tempo informado. Use um formato como 2h, 1h 30m ou 45m.';
+    worklogError.textContent = describeApiError(400);
     worklogError.classList.remove('hidden');
     return;
   }
 
-  const startedIso = buildStartedTimestamp(
-    startDateInput.value,
-    startTimeInput.value,
-    new Date().getTimezoneOffset()
-  );
-  const payload = buildWorklogPayload({ startedIso, timeSpent, comment: commentInput.value });
+  submitWorklogButton.disabled = true;
+  submitWorklogButton.textContent = 'Lançando...';
 
   try {
+    const startedIso = buildStartedTimestamp(
+      startDateInput.value,
+      startTimeInput.value,
+      new Date().getTimezoneOffset()
+    );
+    const payload = buildWorklogPayload({ startedIso, timeSpent, comment: commentInput.value });
+
     const result = await postWorklog({
       baseUrl: currentAuth.baseUrl,
       issueKey,
@@ -239,15 +250,22 @@ worklogForm.addEventListener('submit', async (event) => {
     });
     await renderHistory();
 
-    worklogSuccess.innerHTML =
-      `Horas lançadas com sucesso. ` +
-      `<a href="${currentAuth.baseUrl}/browse/${issueKey}" target="_blank" rel="noopener">Abrir tarefa no Jira</a>`;
+    worklogSuccess.textContent = 'Horas lançadas com sucesso. ';
+    const link = document.createElement('a');
+    link.href = `${currentAuth.baseUrl}/browse/${encodeURIComponent(issueKey)}`;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = 'Abrir tarefa no Jira';
+    worklogSuccess.appendChild(link);
     worklogSuccess.classList.remove('hidden');
     worklogForm.reset();
     setDefaultDateTime();
     issueSummary.textContent = '';
   } catch (error) {
     showNetworkError(worklogError, worklogErrorDetails, worklogErrorTechnical, error);
+  } finally {
+    submitWorklogButton.disabled = false;
+    submitWorklogButton.textContent = 'Lançar horas';
   }
 });
 
