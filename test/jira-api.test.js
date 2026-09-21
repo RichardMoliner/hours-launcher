@@ -118,3 +118,44 @@ test('fetchIssueSummary returns a not-found message on 404', async () => {
     message: 'Tarefa DESENV-9999 não encontrada. Confira a chave.',
   });
 });
+
+import { postWorklog } from '../lib/jira-api.js';
+
+test('postWorklog sends a POST with the payload and returns ok on 201', async () => {
+  const fetchImpl = fakeFetch({ ok: true, status: 201 });
+  const payload = { started: '2026-09-21T09:00:00.000-0300', timeSpent: '2h' };
+
+  const result = await postWorklog({
+    baseUrl: 'https://desenv.betha.com.br',
+    issueKey: 'DESENV-1234',
+    authHeader: 'Basic abc123',
+    payload,
+    fetchImpl,
+  });
+
+  assert.deepEqual(result, { ok: true });
+  const call = fetchImpl.calls[0];
+  assert.equal(call.url, 'https://desenv.betha.com.br/rest/api/2/issue/DESENV-1234/worklog');
+  assert.equal(call.options.method, 'POST');
+  assert.equal(call.options.headers.Authorization, 'Basic abc123');
+  assert.equal(call.options.headers['Content-Type'], 'application/json');
+  assert.equal(call.options.body, JSON.stringify(payload));
+});
+
+test('postWorklog returns an invalid-time message on 400', async () => {
+  const fetchImpl = fakeFetch({ ok: false, status: 400 });
+
+  const result = await postWorklog({
+    baseUrl: 'https://desenv.betha.com.br',
+    issueKey: 'DESENV-1234',
+    authHeader: 'Basic abc123',
+    payload: { started: 'x', timeSpent: 'not-a-duration' },
+    fetchImpl,
+  });
+
+  assert.deepEqual(result, {
+    ok: false,
+    status: 400,
+    message: 'Não foi possível interpretar o tempo informado. Use um formato como 2h, 1h 30m ou 45m.',
+  });
+});
