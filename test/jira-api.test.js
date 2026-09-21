@@ -22,6 +22,10 @@ test('describeApiError maps known statuses', () => {
   );
 });
 
+test('describeApiError maps 404 without issueKey', () => {
+  assert.equal(describeApiError(404), 'Tarefa não encontrada. Confira a chave.');
+});
+
 test('describeApiError falls back to a generic message with status', () => {
   assert.equal(describeApiError(500), 'Não foi possível completar a operação (status 500).');
 });
