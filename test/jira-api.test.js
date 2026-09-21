@@ -29,3 +29,54 @@ test('describeApiError maps 404 without issueKey', () => {
 test('describeApiError falls back to a generic message with status', () => {
   assert.equal(describeApiError(500), 'Não foi possível completar a operação (status 500).');
 });
+
+import { validateLogin } from '../lib/jira-api.js';
+
+function fakeFetch(response) {
+  const calls = [];
+  const fn = async (url, options) => {
+    calls.push({ url, options });
+    return response;
+  };
+  fn.calls = calls;
+  return fn;
+}
+
+test('validateLogin returns user info on 200', async () => {
+  const fetchImpl = fakeFetch({
+    ok: true,
+    status: 200,
+    json: async () => ({ name: 'rjunior', displayName: 'Richard', emailAddress: 'r@x.com' }),
+  });
+
+  const result = await validateLogin({
+    baseUrl: 'https://desenv.betha.com.br',
+    authHeader: 'Basic abc123',
+    fetchImpl,
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    name: 'rjunior',
+    displayName: 'Richard',
+    emailAddress: 'r@x.com',
+  });
+  assert.equal(fetchImpl.calls[0].url, 'https://desenv.betha.com.br/rest/api/2/myself');
+  assert.equal(fetchImpl.calls[0].options.headers.Authorization, 'Basic abc123');
+});
+
+test('validateLogin returns a failure message on 401', async () => {
+  const fetchImpl = fakeFetch({ ok: false, status: 401 });
+
+  const result = await validateLogin({
+    baseUrl: 'https://desenv.betha.com.br',
+    authHeader: 'Basic wrong',
+    fetchImpl,
+  });
+
+  assert.deepEqual(result, {
+    ok: false,
+    status: 401,
+    message: 'Usuário ou senha inválidos',
+  });
+});
